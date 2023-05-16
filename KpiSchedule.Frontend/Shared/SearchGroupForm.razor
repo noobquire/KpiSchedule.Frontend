@@ -1,0 +1,34 @@
+﻿@using KpiSchedule.Common.Entities.Group;
+@using KpiSchedule.Frontend.ViewModels;
+@using KpiSchedule.Frontend.ViewModels.Group;
+@inject KpiScheduleApiClient client;
+
+<EditForm Model="@SearchGroupSchedule" OnSubmit="HandleSearch">
+    <h3>Пошук розкладу групи</h3>
+    <div class="form-group row">
+        <label for="inputGroupName" class="col-sm-1 col-form-label">Код групи: </label>
+        <div class="col-sm-3">
+            <InputText class="form-control mb-2" id="inputGroupName" placeholder="АА-21" @bind-Value="SearchGroupSchedule.GroupName"/>
+        </div>
+        <div class="col-sm-1">
+            <button type="submit" class="btn btn-primary mb-2">Пошук</button>
+        </div>
+    </div>
+</EditForm>
+<ul class="list-group list-group-flush">
+    @foreach (var searchResult in SearchResults)
+    {
+        <li class="list-group-item"><NavLink class="nav-link" href="@($"group-schedule/{searchResult.ScheduleId}")">@searchResult.GroupName</NavLink></li>
+    }
+</ul>
+
+@code {
+    public SearchGroupScheduleViewModel SearchGroupSchedule { get; set; } = new SearchGroupScheduleViewModel();
+    public List<GroupScheduleSearchResult> SearchResults { get; set; } = new List<GroupScheduleSearchResult>();
+
+    async Task HandleSearch()
+    {
+        var results = await client.SearchGroupSchedules(SearchGroupSchedule.GroupName);
+        SearchResults = results ?? new List<GroupScheduleSearchResult>();
+    }
+}

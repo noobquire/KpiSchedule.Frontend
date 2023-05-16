@@ -1,0 +1,3 @@
+﻿!div:has(iframe) {
+    margin: 0px;
+}

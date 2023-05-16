@@ -1,0 +1,10 @@
+﻿@page "/group-schedule/search"
+@using KpiSchedule.Frontend.Shared
+
+<PageTitle>Пошук групи</PageTitle>
+<SearchGroupForm/>
+
+@code {
+    [Parameter]
+    public Guid scheduleId { get; set; }
+}

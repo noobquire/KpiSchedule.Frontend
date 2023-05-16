@@ -1,0 +1,61 @@
+﻿@using KpiSchedule.Api.Models.Requests;
+@using KpiSchedule.Frontend.ViewModels;
+@using System.Text.Json;
+@using Blazored.LocalStorage;
+@inject IJSRuntime Js;
+@inject KpiScheduleApiClient client;
+@inject ILocalStorageService localStorage;
+
+<div class="nav-item mx-auto">
+    @if (_showLoginButton)
+    {
+        <script id="login" suppress-error="BL9992" src="https://telegram.org/js/telegram-widget.js?14" data-telegram-login="kpi_schedule_com_bot" data-size="large" data-onauth="onTelegramAuth(user)"></script>
+        <script suppress-error="BL9992" type="text/javascript">
+            window.onTelegramAuth = (user) => {
+                var ref = window.refs.updateTelegramLogin
+                ref.invokeMethodAsync('LoginWithTelegram', user);
+            }
+        </script>
+    }
+</div>
+
+@code {
+    [CascadingParameter]
+    private bool DisplayPersonalSchedule { get; set; }
+
+    private TelegramLoginInterop _telegramLoginInterop;
+
+    string _jsUpdateLoginRefId = "updateTelegramLogin";
+
+    bool _showLoginButton;
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (firstRender)
+        {
+            _showLoginButton = true;
+            StateHasChanged();
+        }
+        base.OnAfterRender(firstRender);
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        _telegramLoginInterop = new TelegramLoginInterop(Login);
+        await Js.InvokeVoidAsync("setupDotnetRef", DotNetObjectReference.Create(_telegramLoginInterop), _jsUpdateLoginRefId);
+        await base.OnAfterRenderAsync(firstRender);
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+    }
+
+    private async Task Login(JsonElement receivedTelegramInfo)
+    {
+        var token = await client.AuthenticateTelegramUser(receivedTelegramInfo.Deserialize<TelegramAuthenticationRequest>());
+
+        await localStorage.SetItemAsync("token", token);
+        DisplayPersonalSchedule = true;
+    }
+}

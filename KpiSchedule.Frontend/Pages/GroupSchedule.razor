@@ -1,0 +1,32 @@
+﻿@page "/group-schedule/{scheduleId:guid}"
+@using KpiSchedule.Common.Entities.Group;
+@using KpiSchedule.Frontend.Shared
+@using KpiSchedule.Frontend.ViewModels.Group;
+@inject KpiScheduleApiClient client
+
+<PageTitle>Розклад групи</PageTitle>
+@if(scheduleEntity is null)
+{
+    <p>Loading...</p>
+} else
+{
+    <h2 class="text-center">Розклад занять для @scheduleViewModel.GroupName</h2>
+    <h3 class="text-center">Перший тиждень</h3>
+    <GroupScheduleTable Pairs="@(scheduleViewModel.GrouppedFirstWeekPairs)" />
+    <h3 class="text-center">Другий тиждень</h3>
+    <GroupScheduleTable Pairs="@(scheduleViewModel.GrouppedSecondWeekPairs)" />
+}
+
+@code {
+    [Parameter]
+    public Guid scheduleId { get; set; }
+
+    private GroupScheduleEntity? scheduleEntity;
+    private GroupScheduleViewModel scheduleViewModel;
+
+    protected override async Task OnInitializedAsync()
+    {
+        scheduleEntity = await client.GetGroupSchedule(scheduleId);
+        scheduleViewModel = scheduleEntity.MapToViewModel();
+    }
+}
