@@ -6,6 +6,7 @@ using KpiSchedule.Common.Entities.Group;
 using KpiSchedule.Common.Entities.Student;
 using KpiSchedule.Common.Entities.Teacher;
 using System.Net.Http.Headers;
+using System.Text;
 using System.Text.Json;
 using System.Web;
 using ILogger = Serilog.ILogger;
@@ -31,7 +32,7 @@ namespace KpiSchedule.Frontend.Client
         {
             var requestApi = "login/telegram";
             var telegramAuthJson = JsonSerializer.Serialize(request);
-            var requestContent = new StringContent(telegramAuthJson);
+            var requestContent = new StringContent(telegramAuthJson, Encoding.UTF8, "application/json");
             var response = await httpClient.PostAsync(requestApi, requestContent);
             var token = await VerifyAndParseResponseBody<JwtTokenResponse>(response);
 
@@ -134,7 +135,7 @@ namespace KpiSchedule.Frontend.Client
             var requestApi = "schedules/student";
 
             var requestModelJson = JsonSerializer.Serialize(requestModel);
-            var requestContent = new StringContent(requestModelJson);
+            var requestContent = new StringContent(requestModelJson, Encoding.UTF8, "application/json");
             var response = await httpClient.PostAsync(requestApi, requestContent);
             var schedule = await VerifyAndParseResponseBody<StudentScheduleEntity>(response);
 
@@ -146,7 +147,7 @@ namespace KpiSchedule.Frontend.Client
             var requestApi = $"schedules/student/{scheduleId}/pair";
 
             var requestModelJson = JsonSerializer.Serialize(requestModel);
-            var requestContent = new StringContent(requestModelJson);
+            var requestContent = new StringContent(requestModelJson, Encoding.UTF8, "application/json");
             var response = await httpClient.DeleteAsync(requestApi);
             var updatedSchedule = await VerifyAndParseResponseBody<StudentScheduleEntity>(response);
 
@@ -158,7 +159,7 @@ namespace KpiSchedule.Frontend.Client
             var requestApi = $"schedules/student/{scheduleId}/pair";
 
             var requestModelJson = JsonSerializer.Serialize(requestModel);
-            var requestContent = new StringContent(requestModelJson);
+            var requestContent = new StringContent(requestModelJson, Encoding.UTF8, "application/json");
             var response = await httpClient.PutAsync(requestApi, requestContent);
             var updatedSchedule = await VerifyAndParseResponseBody<StudentScheduleEntity>(response);
 
