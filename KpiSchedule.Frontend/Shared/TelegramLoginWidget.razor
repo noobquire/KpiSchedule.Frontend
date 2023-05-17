@@ -65,6 +65,7 @@ else
     {
         await localStorage.ClearAsync();
         isLoggedIn = false;
+        StateHasChanged();
     }
 
     private async Task Login(JsonElement receivedTelegramInfo)
