@@ -53,7 +53,11 @@
 
     private async Task Login(JsonElement receivedTelegramInfo)
     {
-        var token = await client.AuthenticateTelegramUser(receivedTelegramInfo.Deserialize<TelegramAuthenticationRequest>());
+        var options = new JsonSerializerOptions
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+        };
+        var token = await client.AuthenticateTelegramUser(receivedTelegramInfo.Deserialize<TelegramAuthenticationRequest>(options));
 
         await localStorage.SetItemAsync("token", token);
         DisplayPersonalSchedule = true;
