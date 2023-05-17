@@ -43,7 +43,6 @@ else
 
     protected override void OnAfterRender(bool firstRender)
     {
-        isLoggedIn = authToken is not null;
         base.OnAfterRender(firstRender);
     }
 
@@ -51,6 +50,7 @@ else
     {
         authToken = await localStorage.GetItemAsync<JwtTokenResponse>("token");
         telegramData = await localStorage.GetItemAsync<TelegramAuthenticationRequest>("telegramData");
+        isLoggedIn = authToken is not null;
         telegramLoginInterop = new TelegramLoginInterop(Login);
         await Js.InvokeVoidAsync("setupDotnetRef", DotNetObjectReference.Create(telegramLoginInterop), jsUpdateLoginRefId);
         await base.OnAfterRenderAsync(firstRender);
