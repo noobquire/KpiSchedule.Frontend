@@ -39,12 +39,11 @@ else
 
     string jsUpdateLoginRefId = "updateTelegramLogin";
 
-    bool isLoggedIn = true;
+    bool isLoggedIn = false;
 
     protected override void OnAfterRender(bool firstRender)
     {
-        
-        //isLoggedIn = true; //authToken is not null;
+        isLoggedIn = authToken is not null;
         base.OnAfterRender(firstRender);
     }
 
