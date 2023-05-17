@@ -1,4 +1,5 @@
 ﻿@using KpiSchedule.Api.Models.Requests;
+@using KpiSchedule.Api.Models.Responses;
 @using KpiSchedule.Frontend.ViewModels;
 @using System.Text.Json;
 @using Blazored.LocalStorage;
@@ -6,9 +7,10 @@
 @inject KpiScheduleApiClient client;
 @inject ILocalStorageService localStorage;
 
-<div class="nav-item mx-auto">
-    @if (_showLoginButton)
-    {
+
+@if (!isLoggedIn)
+{
+    <div class="nav-item mx-auto">
         <script id="login" suppress-error="BL9992" src="https://telegram.org/js/telegram-widget.js?14" data-telegram-login="kpi_schedule_com_bot" data-size="large" data-onauth="onTelegramAuth(user)"></script>
         <script suppress-error="BL9992" type="text/javascript">
             window.onTelegramAuth = (user) => {
@@ -16,33 +18,42 @@
                 ref.invokeMethodAsync('LoginWithTelegram', user);
             }
         </script>
-    }
-</div>
+    </div>
+}
+else
+{
+    <span class="nav-item my-2">Ви увійшли як @telegramData.FirstName @telegramData.LastName</span>
+    <div class="nav-item ms-3">
+        <button class="btn btn-primary" @onclick="Logout">Вийти</button>
+    </div>
+}
+
 
 @code {
     [CascadingParameter]
     private bool DisplayPersonalSchedule { get; set; }
 
-    private TelegramLoginInterop _telegramLoginInterop;
+    private TelegramLoginInterop telegramLoginInterop;
+    private TelegramAuthenticationRequest telegramData;
+    private JwtTokenResponse authToken;
 
-    string _jsUpdateLoginRefId = "updateTelegramLogin";
+    string jsUpdateLoginRefId = "updateTelegramLogin";
 
-    bool _showLoginButton;
+    bool isLoggedIn = true;
 
     protected override void OnAfterRender(bool firstRender)
     {
-        if (firstRender)
-        {
-            _showLoginButton = true;
-            StateHasChanged();
-        }
+        
+        //isLoggedIn = true; //authToken is not null;
         base.OnAfterRender(firstRender);
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        _telegramLoginInterop = new TelegramLoginInterop(Login);
-        await Js.InvokeVoidAsync("setupDotnetRef", DotNetObjectReference.Create(_telegramLoginInterop), _jsUpdateLoginRefId);
+        authToken = await localStorage.GetItemAsync<JwtTokenResponse>("token");
+        telegramData = await localStorage.GetItemAsync<TelegramAuthenticationRequest>("telegramData");
+        telegramLoginInterop = new TelegramLoginInterop(Login);
+        await Js.InvokeVoidAsync("setupDotnetRef", DotNetObjectReference.Create(telegramLoginInterop), jsUpdateLoginRefId);
         await base.OnAfterRenderAsync(firstRender);
     }
 
@@ -51,15 +62,24 @@
         await base.OnInitializedAsync();
     }
 
+    private async Task Logout()
+    {
+        await localStorage.ClearAsync();
+        isLoggedIn = false;
+    }
+
     private async Task Login(JsonElement receivedTelegramInfo)
     {
         var options = new JsonSerializerOptions
         {
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase
         };
-        var token = await client.AuthenticateTelegramUser(receivedTelegramInfo.Deserialize<TelegramAuthenticationRequest>(options));
+        var telegramData = receivedTelegramInfo.Deserialize<TelegramAuthenticationRequest>(options);
+        var token = await client.AuthenticateTelegramUser(telegramData);
 
+        await localStorage.SetItemAsync("telegramData", telegramData);
         await localStorage.SetItemAsync("token", token);
         DisplayPersonalSchedule = true;
+        isLoggedIn = true;
     }
 }
