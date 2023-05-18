@@ -31,8 +31,7 @@ else
 
 @code {
     [CascadingParameter]
-    private bool DisplayPersonalSchedule { get; set; }
-
+    public NavBarModel parentModel { get; set; }
     private TelegramLoginInterop telegramLoginInterop;
     private TelegramAuthenticationRequest telegramData;
     private JwtTokenResponse authToken;
@@ -41,22 +40,13 @@ else
 
     bool isLoggedIn;
 
-    protected override async Task OnAfterRenderAsync(bool firstRender)
+    protected override async Task OnInitializedAsync()
     {
         authToken = await localStorage.GetItemAsync<JwtTokenResponse>("token");
         telegramData = await localStorage.GetItemAsync<TelegramAuthenticationRequest>("telegramData");
-        if (isLoggedIn != authToken is not null)
-        {
-            isLoggedIn = !isLoggedIn;
-            StateHasChanged();
-        }
+        isLoggedIn = authToken is not null;
         telegramLoginInterop = new TelegramLoginInterop(Login);
         await Js.InvokeVoidAsync("setupDotnetRef", DotNetObjectReference.Create(telegramLoginInterop), jsUpdateLoginRefId);
-        await base.OnAfterRenderAsync(firstRender);
-    }
-
-    protected override async Task OnInitializedAsync()
-    {
         await base.OnInitializedAsync();
     }
 
@@ -65,6 +55,7 @@ else
         await localStorage.ClearAsync();
         isLoggedIn = false;
         StateHasChanged();
+        parentModel.DisplayPersonalSchedule = false;
     }
 
     private async Task Login(JsonElement receivedTelegramInfo)
@@ -78,8 +69,8 @@ else
 
         await localStorage.SetItemAsync("telegramData", telegramData);
         await localStorage.SetItemAsync("token", token);
-        DisplayPersonalSchedule = true;
         isLoggedIn = true;
         StateHasChanged();
+        parentModel.DisplayPersonalSchedule = true;
     }
 }
