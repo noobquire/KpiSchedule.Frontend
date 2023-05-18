@@ -1,0 +1,42 @@
+﻿@using KpiSchedule.Common.Entities.Group
+@using KpiSchedule.Frontend.Client;
+@using KpiSchedule.Frontend.ViewModels.Group;
+@using KpiSchedule.Frontend.ViewModels.Teacher;
+@inject KpiScheduleApiClient client;
+
+@{
+    <table class="table table-sm table-striped">
+        <thead>
+            <tr>
+                <th></th>
+                <th class="text-center">Понеділок</th>
+                <th class="text-center">Вівторок</th>
+                <th class="text-center">Середа</th>
+                <th class="text-center">Четвер</th>
+                <th class="text-center">П'ятниця</th>
+                <th class="text-center">Субота</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var schedulePairsGroup in Pairs)
+            {
+                <tr class="w-25">
+                    <td>
+                        <h4>@schedulePairsGroup.PairNumber пара</h4>
+                        <h5>@schedulePairsGroup.StartTime - @schedulePairsGroup.EndTime</h5>
+                    </td>
+                    @foreach (var day in schedulePairsGroup.Days)
+                    {
+                        <td>
+                            <TeacherSchedulePairsGroup Day="day" />
+                        </td>
+                    }
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+@code {
+    [Parameter]
+    public List<TeacherSchedulePairsGroupViewModel> Pairs { get; set; }
+}

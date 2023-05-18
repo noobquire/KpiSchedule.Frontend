@@ -101,10 +101,9 @@ namespace KpiSchedule.Frontend.Client
 
         public async Task<List<TeacherScheduleSearchResult>> SearchTeacherSchedules(string teacherNamePrefix)
         {
-            var query = HttpUtility.ParseQueryString("schedules/teacher/search");
-            query.Add("teacherNamePrefix", teacherNamePrefix);
+            var requestApi = $"schedules/teacher/search?teacherNamePrefix={teacherNamePrefix}";
 
-            var response = await httpClient.GetAsync(query.ToString());
+            var response = await httpClient.GetAsync(requestApi);
             var searchResults = await VerifyAndParseResponseBody<List<TeacherScheduleSearchResult>>(response);
 
             return searchResults;

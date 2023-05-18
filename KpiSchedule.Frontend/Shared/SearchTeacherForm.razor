@@ -1,0 +1,36 @@
+﻿@using KpiSchedule.Common.Entities.Group;
+@using KpiSchedule.Common.Entities.Teacher;
+@using KpiSchedule.Frontend.ViewModels;
+@using KpiSchedule.Frontend.ViewModels.Group;
+@using KpiSchedule.Frontend.ViewModels.Teacher;
+@inject KpiScheduleApiClient client;
+
+<EditForm Model="@SearchTeacherSchedule" OnSubmit="HandleSearch">
+    <h3>Пошук розкладу групи</h3>
+    <div class="form-group row">
+        <label for="inputTeacherName" class="col-sm-1 col-form-label">ПІБ викладача: </label>
+        <div class="col-sm-3">
+            <InputText class="form-control mb-2" id="inputTeacherName" placeholder="Іванов Іван Іванович" @bind-Value="SearchTeacherSchedule.TeacherName" />
+        </div>
+        <div class="col-sm-1">
+            <button type="submit" class="btn btn-primary mb-2">Пошук</button>
+        </div>
+    </div>
+</EditForm>
+<ul class="list-group list-group-flush">
+    @foreach (var searchResult in SearchResults)
+    {
+        <li class="list-group-item"><NavLink class="nav-link" href="@($"teacher-schedule/{searchResult.ScheduleId}")">@searchResult.TeacherName</NavLink></li>
+    }
+</ul>
+
+@code {
+    public SearchTeacherScheduleViewModel SearchTeacherSchedule { get; set; } = new SearchTeacherScheduleViewModel();
+    public List<TeacherScheduleSearchResult> SearchResults { get; set; } = new List<TeacherScheduleSearchResult>();
+
+    async Task HandleSearch()
+    {
+        var results = await client.SearchTeacherSchedules(SearchTeacherSchedule.TeacherName);
+        SearchResults = results ?? new List<TeacherScheduleSearchResult>();
+    }
+}

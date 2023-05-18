@@ -1,0 +1,35 @@
+﻿@using KpiSchedule.Common.Entities.Group
+@using KpiSchedule.Frontend.ViewModels.Group;
+@using KpiSchedule.Frontend.ViewModels.Teacher;
+@if(Day.Pairs.Count == 0)
+{
+    
+} else if (Day.Pairs.Count == 1)
+{
+    <div class="card">
+        <div class="card-body">
+            <h5 class="card-title">@Day.Pairs.First().Subject</h5>
+            <h6 class="card-subtitle mb-2 text-muted">@(string.Join(", ", Day.Pairs.First().Groups))</h6>
+            <p class="card-text">@Day.Pairs.First().PairType @(Day.Pairs.First().IsOnline ? "онлайн" : "") @(string.Join(", ", Day.Pairs.First().Rooms)) </p>
+        </div>
+    </div>
+} else
+{
+    <div class="card">
+        <ul class="list-group list-group-flush">
+            @foreach (var pair in Day.Pairs)
+            {
+                <li class="list-group-item">
+                    <h5 class="card-title">@pair.Subject</h5>
+                    <h6 class="card-subtitle mb-2 text-muted">@(string.Join(", ", pair.Groups))</h6>
+                    <p class="card-text">@pair.PairType @(pair.IsOnline ? "онлайн" : "") @(string.Join(", ", pair.Rooms)) </p>
+                </li>
+            }
+        </ul>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public TeacherScheduleDayViewModel Day { get; set; }
+}
