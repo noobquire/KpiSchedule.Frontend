@@ -1,5 +1,6 @@
 ﻿@using KpiSchedule.Common.Entities.Group
 @using KpiSchedule.Frontend.Client;
+@using KpiSchedule.Frontend.ViewModels.Group;
 @using KpiSchedule.Frontend.ViewModels.Student;
 @using KpiSchedule.Frontend.ViewModels.Teacher;
 @inject KpiScheduleApiClient client;
@@ -28,7 +29,7 @@
                     @foreach (var day in schedulePairsGroup.Days)
                     {
                         <td>
-                            <TeacherSchedulePairsGroup Day="day" />
+                            <StudentSchedulePairsGroup Day="day" />
                         </td>
                     }
                 </tr>
@@ -38,5 +39,5 @@
 }
 @code {
     [Parameter]
-    public List<TeacherSchedulePairsGroupViewModel> Pairs { get; set; }
+    public List<StudentSchedulePairsGroupViewModel> Pairs { get; set; }
 }

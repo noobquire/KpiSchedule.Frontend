@@ -6,9 +6,10 @@
 @inject IJSRuntime Js;
 @inject KpiScheduleApiClient client;
 @inject ILocalStorageService localStorage;
+@inject AppStateViewModel appState;
 
 
-@if (!isLoggedIn)
+@if (!appState.IsLoggedIn)
 {
     <div class="nav-item mx-auto">
         <script id="login" suppress-error="BL9992" src="https://telegram.org/js/telegram-widget.js?14" data-telegram-login="kpi_schedule_com_bot" data-size="large" data-onauth="onTelegramAuth(user)"></script>
@@ -30,22 +31,16 @@ else
 
 
 @code {
-    [CascadingParameter]
-    public NavBarModel parentModel { get; set; }
     private TelegramLoginInterop telegramLoginInterop;
     private TelegramAuthenticationRequest telegramData;
-    private JwtTokenResponse authToken;
 
     string jsUpdateLoginRefId = "updateTelegramLogin";
 
-    bool isLoggedIn;
-
     protected override async Task OnInitializedAsync()
     {
-        authToken = await localStorage.GetItemAsync<JwtTokenResponse>("token");
         telegramData = await localStorage.GetItemAsync<TelegramAuthenticationRequest>("telegramData");
-        isLoggedIn = authToken is not null;
         telegramLoginInterop = new TelegramLoginInterop(Login);
+        appState.AppStateChanged += StateHasChanged;
         await Js.InvokeVoidAsync("setupDotnetRef", DotNetObjectReference.Create(telegramLoginInterop), jsUpdateLoginRefId);
         await base.OnInitializedAsync();
     }
@@ -53,9 +48,7 @@ else
     private async Task Logout()
     {
         await localStorage.ClearAsync();
-        isLoggedIn = false;
-        StateHasChanged();
-        parentModel.DisplayPersonalSchedule = false;
+        appState.IsLoggedIn = false;
     }
 
     private async Task Login(JsonElement receivedTelegramInfo)
@@ -69,8 +62,6 @@ else
 
         await localStorage.SetItemAsync("telegramData", telegramData);
         await localStorage.SetItemAsync("token", token);
-        isLoggedIn = true;
-        StateHasChanged();
-        parentModel.DisplayPersonalSchedule = true;
+        appState.IsLoggedIn = true;
     }
 }

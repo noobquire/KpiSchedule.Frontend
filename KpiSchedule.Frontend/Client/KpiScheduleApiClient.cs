@@ -1,31 +1,33 @@
-﻿using KpiSchedule.Api.Models.Requests;
+﻿using Blazored.LocalStorage;
+using KpiSchedule.Api.Models.Requests;
 using KpiSchedule.Api.Models.Responses;
 using KpiSchedule.Common.Clients;
 using KpiSchedule.Common.Entities.Base;
 using KpiSchedule.Common.Entities.Group;
 using KpiSchedule.Common.Entities.Student;
 using KpiSchedule.Common.Entities.Teacher;
+using Serilog.Core;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
-using System.Web;
-using ILogger = Serilog.ILogger;
 
 namespace KpiSchedule.Frontend.Client
 {
     public class KpiScheduleApiClient : BaseClient
     {
         private readonly HttpClient httpClient;
+        private readonly ILocalStorageService localStorage;
 
-        public KpiScheduleApiClient(IHttpClientFactory clientFactory, ILogger logger) : base(logger)
+        public KpiScheduleApiClient(IHttpClientFactory clientFactory, ILocalStorageService localStorage) : base(Logger.None)
         {
             httpClient = clientFactory.CreateClient(nameof(KpiScheduleApiClient));
+            this.localStorage = localStorage;
         }
 
-        public KpiScheduleApiClient SetAuthenticationHeader(string accessToken)
+        public async Task SetAuthenticationHeader()
         {
-            httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
-            return this;
+            var authToken = await localStorage.GetItemAsync<JwtTokenResponse>("token"); 
+            httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", authToken.Token);
         }
 
         public async Task<JwtTokenResponse> AuthenticateTelegramUser(TelegramAuthenticationRequest request)
@@ -153,7 +155,7 @@ namespace KpiSchedule.Frontend.Client
             return updatedSchedule;
         }
 
-        public async Task<StudentScheduleEntity> UpdateScheduleEntity(Guid scheduleId, UpdateSchedulePairRequest requestModel)
+        public async Task<StudentScheduleEntity> UpdateSchedulePair(Guid scheduleId, UpdateSchedulePairRequest requestModel)
         {
             var requestApi = $"schedules/student/{scheduleId}/pair";
 
@@ -163,6 +165,24 @@ namespace KpiSchedule.Frontend.Client
             var updatedSchedule = await VerifyAndParseResponseBody<StudentScheduleEntity>(response);
 
             return updatedSchedule;
-        } 
+        }
+
+        public async Task<List<StudentScheduleSearchResult>> GetSchedulesForStudent(string userId)
+        {
+            var requestApi = $"student/{userId}/schedules";
+
+            var response = await httpClient.GetAsync(requestApi);
+            var schedules = await VerifyAndParseResponseBody<List<StudentScheduleSearchResult>>(response);
+
+            return schedules;
+        }
+
+        public async Task DeleteStudentSchedule(Guid scheduleId)
+        {
+            var requestApi = $"schedules/student/{scheduleId}";
+
+            var response = await httpClient.DeleteAsync(requestApi);
+            await CheckIfSuccessfulResponse(response, requestApi);
+        }
     }
 }

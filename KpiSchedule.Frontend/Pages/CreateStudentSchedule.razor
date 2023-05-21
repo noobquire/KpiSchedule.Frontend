@@ -1,5 +1,7 @@
-﻿@page "/student-schedule/create/{scheduleId:guid}"
+﻿@page "/personal-schedule/create/{scheduleId:guid}"
+@using Blazored.LocalStorage;
 @using KpiSchedule.Api.Models.Requests;
+@using KpiSchedule.Api.Models.Responses;
 @using KpiSchedule.Common.Entities.Base;
 @using KpiSchedule.Common.Entities.Group;
 @using KpiSchedule.Frontend.Shared
@@ -7,17 +9,26 @@
 @using KpiSchedule.Frontend.ViewModels.Student;
 @inject KpiScheduleApiClient client;
 @inject NavigationManager navManager;
+@inject ILocalStorageService localStorage;
 
 <PageTitle>Створення особистого розкладу</PageTitle>
-@if (viewModel is null)
+@if (isLoggedIn is null && viewModel is null)
 {
     <p>Loading...</p>
+}
+else if (!isLoggedIn.Value)
+{
+    <h2>Авторизуйтеся для створення розкладу</h2>
 }
 else
 {
     <h2>Створення особистого розкладу</h2>
     <EditForm Model="viewModel" OnSubmit="(() => CreateSchedule(viewModel))">
-        <div>
+        <div class="my-3">
+            <div class="input-group w-25">
+                <span class="input-group-text">Назва розкладу</span>
+                <InputText @bind-Value="viewModel.ScheduleName" class="form-control" placeholder="Особистий розклад" id="schedule-name-input"></InputText>
+            </div>
             <h5>Оберіть дисципліни для особистого розкладу</h5>
             @for (int i = 0; i < viewModel.Subjects.Count; i++)
             {
@@ -38,22 +49,34 @@ else
     [Parameter]
     public Guid scheduleId { get; set; }
 
-    CreateStudentScheduleViewModel viewModel { get; set; }
+    CreateStudentScheduleViewModel viewModel;
+    bool? isLoggedIn;
+    JwtTokenResponse authToken;
 
     protected override async Task OnInitializedAsync()
     {
+        authToken = await localStorage.GetItemAsync<JwtTokenResponse>("token");
+        isLoggedIn = authToken is not null;
+        if (!isLoggedIn.Value)
+        {
+            return;
+        }
+
         var subjects = await client.GetSubjectsInGroupSchedule(scheduleId);
         viewModel = new CreateStudentScheduleViewModel(subjects);
     }
 
     private async Task CreateSchedule(CreateStudentScheduleViewModel createScheduleModel)
     {
+        await client.SetAuthenticationHeader();
         var request = new CreateStudentScheduleRequest
-        {
-            GroupScheduleId = scheduleId,
-            SubjectNames = createScheduleModel.SelectedSubjects.Select(s => s.SubjectName)
-        };
+            {
+                GroupScheduleId = scheduleId,
+                SubjectNames = createScheduleModel.SelectedSubjects.Select(s => s.SubjectName),
+                ScheduleName = createScheduleModel.ScheduleName
+            };
         var studentSchedule = await client.CreateStudentScheduleFromGroupSchedule(request);
+        navManager.NavigateTo($"/personal-schedule/{studentSchedule.ScheduleId}");
     }
 
     private async Task ToggleSubjectSelected(ChangeEventArgs args, SubjectEntity subject)

@@ -2,6 +2,7 @@ using Blazored.LocalStorage;
 using KpiSchedule.Common.ServiceCollectionExtensions;
 using KpiSchedule.Frontend;
 using KpiSchedule.Frontend.Client;
+using KpiSchedule.Frontend.ViewModels;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using System.Reflection;
@@ -15,8 +16,8 @@ builder.Services.AddHttpClient(nameof(KpiScheduleApiClient), client => {
     client.BaseAddress = new Uri(options.BaseUrl);
     client.Timeout = TimeSpan.FromSeconds(options.TimeoutSeconds);
 });
-builder.Services.AddSerilogConsoleLogger();
 builder.Services.AddBlazoredLocalStorage();
 builder.Services.AddScoped<KpiScheduleApiClient>();
+builder.Services.AddSingleton<AppStateViewModel>();
 
 await builder.Build().RunAsync();

@@ -2,6 +2,7 @@
 @using KpiSchedule.Api.Models.Responses;
 @using KpiSchedule.Frontend.ViewModels;
 @inject ILocalStorageService localStorage;
+@inject AppStateViewModel appState;
 
 <nav class="navbar navbar-expand-lg navbar-light bg-light px-5">
     <a class="navbar-brand" href="#">KPI Schedule</a>
@@ -9,26 +10,30 @@
         <div class="navbar-nav">
             <NavLink class="nav-item nav-link" href="group-schedule/search">Розклад групи</NavLink>
             <NavLink class="nav-item nav-link" href="teacher-schedule/search">Розклад викладача</NavLink>
-            @if (model.DisplayPersonalSchedule)
+            @if (appState.IsLoggedIn)
             {
                 <NavLink class="nav-item nav-link" href="personal-schedule">Особистий розклад</NavLink>
             }
             <NavLink class="nav-item nav-link" href="https://api.kpi-schedule.com">API</NavLink>
         </div>
         <div class="nav navbar-nav navbar-right ms-auto">
-            <CascadingValue Value="model"><TelegramLoginWidget/></CascadingValue>
+            <TelegramLoginWidget />
         </div>
     </div>
 </nav>
 
 @code {
-    private NavBarModel model = new NavBarModel();
-
     protected override async Task OnInitializedAsync()
     {
-        model.Changed = StateHasChanged;
+        appState.AppStateChanged += StateHasChanged;
         var authToken = await localStorage.GetItemAsync<JwtTokenResponse>("token");
-        model.DisplayPersonalSchedule = authToken is not null;
+        if(authToken?.ExpiresAt < DateTime.UtcNow)
+        {
+            // token is expired
+            await localStorage.ClearAsync();
+            authToken = null;
+        }
+        appState.IsLoggedIn = authToken is not null;
         await base.OnInitializedAsync();
     }
 }

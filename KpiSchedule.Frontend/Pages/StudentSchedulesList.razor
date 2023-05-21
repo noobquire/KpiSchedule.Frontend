@@ -1,0 +1,68 @@
+﻿@page "/personal-schedule"
+@using Blazored.LocalStorage;
+@using KpiSchedule.Api.Models.Requests;
+@using KpiSchedule.Common.Entities.Student;
+@using KpiSchedule.Frontend.Shared
+@using KpiSchedule.Frontend.ViewModels.Student;
+@inject KpiScheduleApiClient client
+@inject ILocalStorageService localStorage;
+@inject NavigationManager navManager;
+
+<PageTitle>Ваші рокзлади занять</PageTitle>
+@if (studentSchedules is null)
+{
+    <p>Loading...</p>
+}
+else if (!studentSchedules.Any())
+{
+    <h2 class="text-center">Ви не створили жодного розкладу занять</h2>
+}
+else
+{
+    <h2 class="text-center">Ваші розклади занять</h2>
+    <table class="table table-sm table-striped">
+        <thead>
+            <tr>
+                <th>Назва</th>
+                <th>Останні зміни</th>
+                <th>Публічність</th>
+                <th>Видалення</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var studentSchedule in studentSchedules)
+            {
+                <tr onclick="@(() => NavigateToSchedule(studentSchedule.ScheduleId))" style="cursor:pointer">
+                    <td>@(studentSchedule.ScheduleName ?? "Без назви")</td>
+                    <td>@studentSchedule.UpdatedAt.ToString("dd/MM/yyyy HH:mm")</td>
+                    <td>@(studentSchedule.IsPublic ? "Публічний" : "Приватний")</td>
+                    <td><button class="btn btn-danger" @onclick="(() => DeleteSchedule(studentSchedule.ScheduleId))">Видалити</button></td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<StudentScheduleSearchResult> studentSchedules;
+    private TelegramAuthenticationRequest userData;
+
+    protected override async Task OnInitializedAsync()
+    {
+        userData = await localStorage.GetItemAsync<TelegramAuthenticationRequest>("telegramData");
+        await client.SetAuthenticationHeader();
+        studentSchedules = await client.GetSchedulesForStudent(userData.Id.ToString());
+    }
+
+    private void NavigateToSchedule(Guid scheduleId)
+    {
+        navManager.NavigateTo($"/personal-schedule/{scheduleId}");
+    }
+
+    private async Task DeleteSchedule(Guid scheduleId)
+    {
+        await client.SetAuthenticationHeader();
+        await client.DeleteStudentSchedule(scheduleId);
+        studentSchedules = await client.GetSchedulesForStudent(userData.Id.ToString());
+    }
+}

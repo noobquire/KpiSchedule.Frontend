@@ -1,9 +1,10 @@
 ﻿using KpiSchedule.Frontend.ViewModels.Base;
 
-namespace KpiSchedule.Frontend.ViewModels.Group
+namespace KpiSchedule.Frontend.ViewModels.Student
 {
-    public class GroupScheduleViewModel : BaseScheduleViewModel<GroupScheduleDayViewModel, GroupSchedulePairsGroupViewModel, GroupSchedulePairViewModel>
+    public class StudentScheduleViewModel : BaseScheduleViewModel<StudentScheduleDayViewModel, StudentSchedulePairsGroupViewModel, StudentSchedulePairViewModel>
     {         
-        public string GroupName { get; set; }
+        public string OwnerId { get; set; }
+        public bool IsPublic { get; set; }
     }
 }
