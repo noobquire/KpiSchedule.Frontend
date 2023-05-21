@@ -1,0 +1,71 @@
+﻿@page "/student-schedule/create/{scheduleId:guid}"
+@using KpiSchedule.Api.Models.Requests;
+@using KpiSchedule.Common.Entities.Base;
+@using KpiSchedule.Common.Entities.Group;
+@using KpiSchedule.Frontend.Shared
+@using KpiSchedule.Frontend.ViewModels.Group;
+@using KpiSchedule.Frontend.ViewModels.Student;
+@inject KpiScheduleApiClient client;
+@inject NavigationManager navManager;
+
+<PageTitle>Створення особистого розкладу</PageTitle>
+@if (viewModel is null)
+{
+    <p>Loading...</p>
+}
+else
+{
+    <h2>Створення особистого розкладу</h2>
+    <EditForm Model="viewModel" OnSubmit="(() => CreateSchedule(viewModel))">
+        <div>
+            <h5>Оберіть дисципліни для особистого розкладу</h5>
+            @for (int i = 0; i < viewModel.Subjects.Count; i++)
+            {
+                var subject = viewModel.Subjects.ElementAt(i);
+                var checkboxId = $"subject-check-{i}";
+                <div class="form-check">
+                    <input type="checkbox" class="form-check-input" @onchange="args=>ToggleSubjectSelected(args, subject)" id="@checkboxId"></input>
+                    <label class="form-check-label" for="@checkboxId">@subject.SubjectFullName</label>
+                </div>
+            }
+        </div>
+        <button type="submit" class="btn btn-primary">Створити розклад</button>
+    </EditForm>
+}
+
+@code {
+    // Group schedle ID to create student schedule from
+    [Parameter]
+    public Guid scheduleId { get; set; }
+
+    CreateStudentScheduleViewModel viewModel { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var subjects = await client.GetSubjectsInGroupSchedule(scheduleId);
+        viewModel = new CreateStudentScheduleViewModel(subjects);
+    }
+
+    private async Task CreateSchedule(CreateStudentScheduleViewModel createScheduleModel)
+    {
+        var request = new CreateStudentScheduleRequest
+        {
+            GroupScheduleId = scheduleId,
+            SubjectNames = createScheduleModel.SelectedSubjects.Select(s => s.SubjectName)
+        };
+        var studentSchedule = await client.CreateStudentScheduleFromGroupSchedule(request);
+    }
+
+    private async Task ToggleSubjectSelected(ChangeEventArgs args, SubjectEntity subject)
+    {
+        var isSubjectSelected = (bool)args.Value;
+        if (isSubjectSelected)
+        {
+            viewModel.SelectedSubjects.Add(subject);
+        }
+        else
+        {
+            viewModel.SelectedSubjects.Remove(subject);
+        }
+    }
+}

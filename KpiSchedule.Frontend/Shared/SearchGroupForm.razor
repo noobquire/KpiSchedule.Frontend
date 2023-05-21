@@ -5,17 +5,13 @@
 
 <EditForm Model="@SearchGroupSchedule" OnSubmit="HandleSearch">
     <h3>Пошук розкладу групи</h3>
-    <div class="form-group row">
-        <label for="inputGroupName" class="col-sm-1 col-form-label">Код групи: </label>
-        <div class="col-sm-3">
-            <InputText class="form-control mb-2" id="inputGroupName" placeholder="АА-21" @bind-Value="SearchGroupSchedule.GroupName"/>
-        </div>
-        <div class="col-sm-1">
-            <button type="submit" class="btn btn-primary mb-2">Пошук</button>
-        </div>
+    <div class="input-group w-25">
+        <span class="input-group-text">Код групи: </span>
+        <InputText class="form-control" id="inputGroupName" placeholder="АА-21" @bind-Value="SearchGroupSchedule.GroupName" />
+        <button type="submit" class="btn btn-primary input-group-text">Пошук</button>
     </div>
 </EditForm>
-<ul class="list-group list-group-flush">
+<ul class="list-group list-group-flush w-25">
     @foreach (var searchResult in SearchResults)
     {
         <li class="list-group-item"><NavLink class="nav-link" href="@($"group-schedule/{searchResult.ScheduleId}")">@searchResult.GroupName</NavLink></li>
