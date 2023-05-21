@@ -32,11 +32,11 @@ else
         <tbody>
             @foreach (var studentSchedule in studentSchedules)
             {
-                <tr onclick="@(() => NavigateToSchedule(studentSchedule.ScheduleId))" style="cursor:pointer">
-                    <td>@(studentSchedule.ScheduleName ?? "Без назви")</td>
+                <tr style="cursor:pointer">
+                    <td><NavLink href="@($"personal-schedule/{studentSchedule.ScheduleId}")" class="link" @>@(studentSchedule.ScheduleName ?? "Без назви")</NavLink></td>
                     <td>@studentSchedule.UpdatedAt.ToString("dd/MM/yyyy HH:mm")</td>
                     <td>@(studentSchedule.IsPublic ? "Публічний" : "Приватний")</td>
-                    <td><button class="btn btn-danger" @onclick="(() => DeleteSchedule(studentSchedule.ScheduleId))">Видалити</button></td>
+                    <td><button class="btn btn-outline-danger" @onclick="(() => DeleteSchedule(studentSchedule.ScheduleId))">Видалити</button></td>
                 </tr>
             }
         </tbody>
@@ -50,13 +50,9 @@ else
     protected override async Task OnInitializedAsync()
     {
         userData = await localStorage.GetItemAsync<TelegramAuthenticationRequest>("telegramData");
+        if (userData is null) return;
         await client.SetAuthenticationHeader();
-        studentSchedules = await client.GetSchedulesForStudent(userData.Id.ToString());
-    }
-
-    private void NavigateToSchedule(Guid scheduleId)
-    {
-        navManager.NavigateTo($"/personal-schedule/{scheduleId}");
+        studentSchedules = await client.GetSchedulesForStudent(userData?.Id.ToString());
     }
 
     private async Task DeleteSchedule(Guid scheduleId)

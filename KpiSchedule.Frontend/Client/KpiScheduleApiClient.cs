@@ -26,7 +26,8 @@ namespace KpiSchedule.Frontend.Client
 
         public async Task SetAuthenticationHeader()
         {
-            var authToken = await localStorage.GetItemAsync<JwtTokenResponse>("token"); 
+            var authToken = await localStorage.GetItemAsync<JwtTokenResponse>("token");
+            if (authToken == null) return;
             httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", authToken.Token);
         }
 
