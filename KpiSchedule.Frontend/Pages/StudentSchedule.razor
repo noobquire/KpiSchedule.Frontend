@@ -62,6 +62,7 @@ else
     {
         scheduleEntity = await client.GetStudentSchedule(scheduleId);
         scheduleViewModel = scheduleEntity.MapToViewModel();
+        scheduleViewModel.OwnedByCurrentUser = appState.LoggedInUserId == scheduleViewModel.OwnerId;
         StateHasChanged();
     }
 
