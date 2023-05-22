@@ -15,7 +15,8 @@ namespace KpiSchedule.Frontend.ViewModels.Student
                 OwnerId = entity.OwnerId,
                 ScheduleId = entity.ScheduleId,
                 GrouppedFirstWeekPairs = entity.FirstWeek.GroupPairs(1),
-                GrouppedSecondWeekPairs = entity.SecondWeek.GroupPairs(2)
+                GrouppedSecondWeekPairs = entity.SecondWeek.GroupPairs(2),
+                ScheduleName = entity.ScheduleName
             };
             return viewModel;
         }

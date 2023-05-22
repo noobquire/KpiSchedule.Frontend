@@ -188,5 +188,17 @@ namespace KpiSchedule.Frontend.Client
             var response = await httpClient.DeleteAsync(requestApi);
             await CheckIfSuccessfulResponse(response, requestApi);
         }
+
+        public async Task<StudentScheduleEntity> UpdateScheduleVisibility(Guid scheduleId, UpdateScheduleVisibilityRequest requestModel)
+        {
+            var requestApi = $"schedules/student/{scheduleId}/visibility";
+
+            var requestModelJson = JsonSerializer.Serialize(requestModel);
+            var requestContent = new StringContent(requestModelJson, Encoding.UTF8, "application/json");
+            var response = await httpClient.PutAsync(requestApi, requestContent);
+            var updatedSchedule = await VerifyAndParseResponseBody<StudentScheduleEntity>(response);
+
+            return updatedSchedule;
+        }
     }
 }

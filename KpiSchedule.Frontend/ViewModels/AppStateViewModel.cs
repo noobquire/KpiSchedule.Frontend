@@ -10,6 +10,8 @@ namespace KpiSchedule.Frontend.ViewModels
         public event Action AppStateChanged;
         public event Action ScheduleUpdated;
 
+        public string LoggedInUserId { get; set; }
+
         public bool IsLoggedIn
         {
             get

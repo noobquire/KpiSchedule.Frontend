@@ -7,6 +7,7 @@
 @using KpiSchedule.Frontend.ViewModels;
 @inject KpiScheduleApiClient client;
 @inject AppStateViewModel appState;
+@inject NavigationManager navManager;
 
 <PageTitle>Особистий розклад</PageTitle>
 @if (scheduleEntity is null)
@@ -15,14 +16,28 @@
 }
 else
 {
-    <h2 class="text-center">Особистий розклад занять</h2>
-    <h3 class="text-center">Перший тиждень</h3>
-    <CascadingValue Value="scheduleId">
+    <div class="text-center">
+        <h2 class="text-center d-inline me-2">@scheduleViewModel.ScheduleName</h2>
+        @if (scheduleViewModel.OwnedByCurrentUser)
+        {
+            var visibilityButtonClass = scheduleViewModel.IsPublic ? "fa-eye" : "fa-eye-slash";
+            <button class="btn btn-primary" @onclick="ToggleVisibility"><i class="@($"fa-solid {visibilityButtonClass}")"></i></button>
+            <button class="btn btn-danger" @onclick="OpenDeleteDialog"><i class="fa-solid fa-trash"></i></button>
+        }
+    </div>
+
+    <CascadingValue Value="scheduleViewModel">
+        <h3 class="text-center">Перший тиждень</h3>
         <StudentScheduleTable Pairs="@(scheduleViewModel.GrouppedFirstWeekPairs)" />
         <h3 class="text-center">Другий тиждень</h3>
         <StudentScheduleTable Pairs="@(scheduleViewModel.GrouppedSecondWeekPairs)" />
     </CascadingValue>
+}
 
+@if (openDeleteDialog)
+{
+    var scheduleName = scheduleViewModel.ScheduleName ?? "";
+    <ConfirmDeleteDialog Caption="@($"Видалити розклад {scheduleName}?")" Message="@($"Чи дійсно ви хочете видалити розклад {scheduleName}?")" OnClose="OnDeleteDialogClose"></ConfirmDeleteDialog>
 }
 
 @code {
@@ -33,7 +48,6 @@ else
     private StudentScheduleViewModel scheduleViewModel;
 
     private bool openDeleteDialog = false;
-    private StudentSchedulePairViewModel pairIdToDelete;
 
     protected override async Task OnInitializedAsync()
     {
@@ -41,6 +55,7 @@ else
         await client.SetAuthenticationHeader();
         scheduleEntity = await client.GetStudentSchedule(scheduleId);
         scheduleViewModel = scheduleEntity.MapToViewModel();
+        scheduleViewModel.OwnedByCurrentUser = appState.LoggedInUserId == scheduleViewModel.OwnerId;
     }
 
     private async void OnScheduleUpdated()
@@ -48,5 +63,33 @@ else
         scheduleEntity = await client.GetStudentSchedule(scheduleId);
         scheduleViewModel = scheduleEntity.MapToViewModel();
         StateHasChanged();
+    }
+
+    private async Task OpenDeleteDialog()
+    {
+        openDeleteDialog = true;
+    }
+
+    private async Task OnDeleteDialogClose(bool confirm)
+    {
+        if (confirm)
+        {
+            await client.SetAuthenticationHeader();
+            await client.DeleteStudentSchedule(scheduleViewModel.ScheduleId);
+            navManager.NavigateTo("/personal-schedule");
+        }
+        openDeleteDialog = false;
+    }
+
+    private async Task ToggleVisibility()
+    {
+        await client.SetAuthenticationHeader();
+        var request = new UpdateScheduleVisibilityRequest
+        {
+            IsPublic = !scheduleViewModel.IsPublic
+        };
+        scheduleEntity = await client.UpdateScheduleVisibility(scheduleViewModel.ScheduleId, request);
+        scheduleViewModel = scheduleEntity.MapToViewModel();
+        scheduleViewModel.OwnedByCurrentUser = appState.LoggedInUserId == scheduleViewModel.OwnerId;
     }
 }

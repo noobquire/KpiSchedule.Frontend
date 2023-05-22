@@ -1,4 +1,5 @@
 ﻿@using Blazored.LocalStorage;
+@using KpiSchedule.Api.Models.Requests;
 @using KpiSchedule.Api.Models.Responses;
 @using KpiSchedule.Frontend.ViewModels;
 @inject ILocalStorageService localStorage;
@@ -25,6 +26,7 @@
     {
         appState.AppStateChanged += StateHasChanged;
         var authToken = await localStorage.GetItemAsync<JwtTokenResponse>("token");
+        var telegramData = await localStorage.GetItemAsync<TelegramAuthenticationRequest>("telegramData");
         if (authToken?.ExpiresAt < DateTime.UtcNow)
         {
             // token is expired
@@ -32,6 +34,10 @@
             authToken = null;
         }
         appState.IsLoggedIn = authToken is not null;
+        if(appState.IsLoggedIn)
+        {
+            appState.LoggedInUserId = telegramData.Id.ToString();
+        } 
         await base.OnInitializedAsync();
     }
 }
