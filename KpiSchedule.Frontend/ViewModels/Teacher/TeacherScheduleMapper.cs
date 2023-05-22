@@ -23,7 +23,7 @@ namespace KpiSchedule.Frontend.ViewModels.Teacher
             var viewModel = new TeacherSchedulePairViewModel
             {
                 IsOnline = entity.IsOnline,
-                PairType = entity.PairType.MapPairType(),
+                PairType = entity.PairType.MapPairTypeToString(),
                 Subject = entity.Subject.SubjectName,
                 Rooms = entity.Rooms,
                 Groups = entity.Groups.Select(t => t.GroupName).ToList()

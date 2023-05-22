@@ -1,19 +1,39 @@
-﻿@using KpiSchedule.Common.Entities.Group
+﻿@using KpiSchedule.Api.Models.Requests;
+@using KpiSchedule.Common.Entities.Base;
+@using KpiSchedule.Common.Entities.Group
+@using KpiSchedule.Common.Models;
 @using KpiSchedule.Frontend.ViewModels.Group;
 @using KpiSchedule.Frontend.ViewModels.Student;
-@if(Day.Pairs.Count == 0)
+@using KpiSchedule.Frontend.ViewModels;
+@inject KpiScheduleApiClient client;
+@inject AppStateViewModel appState;
+@inject NavigationManager navManager;
+
+@if (Day.Pairs.Count == 0)
 {
-    
-} else if (Day.Pairs.Count == 1)
+
+}
+else if (Day.Pairs.Count == 1)
 {
+    var pair = Day.Pairs.First();
     <div class="card">
         <div class="card-body">
-            <h5 class="card-title">@Day.Pairs.First().Subject</h5>
-            <h6 class="card-subtitle mb-2 text-muted">@(string.Join(", ", Day.Pairs.First().Teachers))</h6>
-            <p class="card-text">@Day.Pairs.First().PairType @(Day.Pairs.First().IsOnline ? "онлайн" : "") @(string.Join(", ", Day.Pairs.First().Rooms)) </p>
+            <h5 class="card-title">@pair.Subject</h5>
+            <h6 class="card-subtitle mb-2 text-muted">@(string.Join(", ", pair.Teachers))</h6>
+            <div>
+                
+                <span class="card-text me-2">@pair.PairType @(pair.IsOnline ? "онлайн" : "") @(string.Join(", ", pair.Rooms))</span>
+                @if(pair.OnlineConferenceUrl is not null)
+                {
+                    <NavLink class="btn btn-sm btn-outline-success me-1" href="@pair.OnlineConferenceUrl"><i class="fa-solid fa-link text-success"></i></NavLink>
+                }
+                <button class="btn btn-sm btn-outline-primary" @onclick="() => OpenEditDialog(pair)"><i class="fa-solid fa-pen-to-square text-primary"></i></button>
+                <button class="btn btn-sm btn-outline-danger" @onclick="() => OpenDeleteDialog(pair)"><i class="fa-solid fa-trash text-danger"></i></button>
+            </div>
         </div>
     </div>
-} else
+}
+else
 {
     <div class="card">
         <ul class="list-group list-group-flush">
@@ -22,14 +42,118 @@
                 <li class="list-group-item">
                     <h5 class="card-title">@pair.Subject</h5>
                     <h6 class="card-subtitle mb-2 text-muted">@(string.Join(", ", pair.Teachers))</h6>
-                    <p class="card-text">@pair.PairType @(pair.IsOnline ? "онлайн" : "") @(string.Join(", ", pair.Rooms)) </p>
+                    <div>
+                        <span class="card-text me-2">@pair.PairType @(pair.IsOnline ? "онлайн" : "") @(string.Join(", ", pair.Rooms)) </span>
+                        @if (pair.OnlineConferenceUrl is not null)
+                        {
+                            <button class="btn btn-sm btn-outline-success me-1" @onclick="() => OnOpenConferenceUrl(pair.OnlineConferenceUrl)"><i class="fa-solid fa-link text-success"></i></button>
+                        }
+                        <button class="btn btn-sm btn-outline-primary" @onclick="() => OpenEditDialog(pair)"><i class="fa-solid fa-pen-to-square text-primary"></i></button>
+                        <button class="btn btn-sm btn-outline-danger" @onclick="() => OpenDeleteDialog(pair)"><i class="fa-solid fa-trash text-danger"></i></button>
+                    </div>
                 </li>
             }
         </ul>
     </div>
 }
+@if (openDeletePairDialog)
+{
+    var pairName = $"{pairToDelete.Subject} ({pairToDelete.PairId.WeekNumber} тиждень, {GetWeekDayName(pairToDelete.PairId.DayNumber)}, {pairToDelete.PairId.PairNumber} пара)";
+    <ConfirmDeleteDialog Caption="@($"Видалити пару {pairToDelete.Subject}?")" Message="@($"Чи дійсно ви хочете видалити пару {pairName}?")" OnClose="OnDeleteDialogClose"></ConfirmDeleteDialog>
+}
+@if(openEditPairDialog)
+{
+    <EditPairDialog Caption="Редагування пари" OnClose="OnEditDialogClose" Pair="pairToEdit"></EditPairDialog>
+}
 
 @code {
+    [CascadingParameter]
+    public Guid ScheduleId { get; set; }
+
     [Parameter]
     public StudentScheduleDayViewModel Day { get; set; }
+
+    private bool openDeletePairDialog = false;
+    private StudentSchedulePairViewModel pairToDelete;
+
+    private bool openEditPairDialog = false;
+    private StudentSchedulePairViewModel pairToEdit;
+
+    private string GetWeekDayName(int weekDayNumber) => weekDayNumber switch
+    {
+        1 => "понеділок",
+        2 => "вівторок",
+        3 => "середа",
+        4 => "четвер",
+        5 => "п'ятниця",
+        6 => "субота"
+    };
+
+    private void OpenDeleteDialog(StudentSchedulePairViewModel pair)
+    {
+        openDeletePairDialog = true;
+        pairToDelete = pair;
+    }
+
+    private void OpenEditDialog(StudentSchedulePairViewModel pair)
+    {
+        pairToEdit = pair;
+        openEditPairDialog = true;
+    }
+
+    private async Task OnDeleteDialogClose(bool confirm)
+    {
+        if (confirm)
+        {
+            await DeletePair(pairToDelete.PairId);
+        }
+        openDeletePairDialog = false;
+    }
+
+    private async Task DeletePair(PairIdentifier pairId)
+    {
+        var request = new DeleteSchedulePairRequest
+        {
+            Week = pairId.WeekNumber,
+            Day = pairId.DayNumber,
+            Pair = pairId.PairNumber,
+            DupPair = pairId.DuplicatePairNumber
+        };
+        await client.DeleteSchedulePair(ScheduleId, request);
+        appState.ScheduleWasUpdated();
+    }
+
+    private async Task OnEditDialogClose(bool confirm)
+    {
+        if (confirm)
+        {
+            await EditPair(pairToEdit);
+        }
+        openEditPairDialog = false;
+    }
+
+    private async Task EditPair(StudentSchedulePairViewModel pair)
+    {
+        var request = new UpdateSchedulePairRequest
+        {
+            PairId = pair.PairId,
+            PairType = pair.PairType.MapStringToPairType(),
+            IsOnline = pair.IsOnline,
+            Subject = new SubjectEntity
+            {
+                SubjectName = pair.Subject,
+                SubjectFullName = pair.Subject
+            },
+            Rooms = pair.Rooms,
+            OnlineConferenceUrl = pair.OnlineConferenceUrl,
+            TeacherNames = pair.Teachers
+        };
+        await client.UpdateSchedulePair(ScheduleId, request);
+        appState.ScheduleWasUpdated();
+    }
+
+    private async Task OnOpenConferenceUrl(string conferenceUrl)
+    {
+        navManager.NavigateTo(conferenceUrl);
+    }
 }

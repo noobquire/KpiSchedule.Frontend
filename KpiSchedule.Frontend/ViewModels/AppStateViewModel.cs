@@ -8,6 +8,7 @@ namespace KpiSchedule.Frontend.ViewModels
     {
         private bool isLoggedIn;
         public event Action AppStateChanged;
+        public event Action ScheduleUpdated;
 
         public bool IsLoggedIn
         {
@@ -18,8 +19,18 @@ namespace KpiSchedule.Frontend.ViewModels
             set
             {
                 isLoggedIn = value;
-                AppStateChanged?.Invoke();
+                StateHasChanged();
             }
+        }
+
+        public void StateHasChanged()
+        {
+            AppStateChanged?.Invoke();
+        }
+
+        public void ScheduleWasUpdated()
+        {
+            ScheduleUpdated?.Invoke();
         }
     }
 }

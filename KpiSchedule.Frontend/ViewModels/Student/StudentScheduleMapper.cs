@@ -1,4 +1,5 @@
 ﻿using KpiSchedule.Common.Entities.Student;
+using KpiSchedule.Common.Models;
 using KpiSchedule.Common.Parsers;
 using KpiSchedule.Frontend.ViewModels.Group;
 
@@ -13,27 +14,28 @@ namespace KpiSchedule.Frontend.ViewModels.Student
                 IsPublic = entity.IsPublic,
                 OwnerId = entity.OwnerId,
                 ScheduleId = entity.ScheduleId,
-                GrouppedFirstWeekPairs = entity.FirstWeek.GroupPairs(),
-                GrouppedSecondWeekPairs = entity.SecondWeek.GroupPairs()
+                GrouppedFirstWeekPairs = entity.FirstWeek.GroupPairs(1),
+                GrouppedSecondWeekPairs = entity.SecondWeek.GroupPairs(2)
             };
             return viewModel;
         }
 
-        public static StudentSchedulePairViewModel MapToViewModel(this StudentSchedulePairEntity entity)
+        public static StudentSchedulePairViewModel MapToViewModel(this StudentSchedulePairEntity entity, PairIdentifier pairId)
         {
             var viewModel = new StudentSchedulePairViewModel
             {
                 IsOnline = entity.IsOnline,
-                PairType = entity.PairType.MapPairType(),
+                PairType = entity.PairType.MapPairTypeToString(),
                 Subject = entity.Subject.SubjectName,
                 Rooms = entity.Rooms,
                 Teachers = entity.Teachers.Select(t => t.TeacherName).ToList(),
-                OnlineConferenceUrl = entity.OnlineConferenceUrl
+                OnlineConferenceUrl = entity.OnlineConferenceUrl,
+                PairId = pairId
             };
             return viewModel;
         }
 
-        private static List<StudentSchedulePairsGroupViewModel> GroupPairs(this List<StudentScheduleDayEntity> dayEntities)
+        private static List<StudentSchedulePairsGroupViewModel> GroupPairs(this List<StudentScheduleDayEntity> dayEntities, int weekNumber)
         {
             var StudentpedPairs = new List<StudentSchedulePairsGroupViewModel>();
             for (int i = 0; i < 6; i++)
@@ -51,7 +53,17 @@ namespace KpiSchedule.Frontend.ViewModels.Student
                 group.Days = dayEntities.Select(day => new StudentScheduleDayViewModel
                 {
                     DayNumber = day.DayNumber,
-                    Pairs = day.Pairs.Where(pair => pair.PairNumber == pairNumber).Select(pair => pair.MapToViewModel()).ToList()
+                    Pairs = day.Pairs.Where(pair => pair.PairNumber == pairNumber).Select((pair, dupPairNumber) =>
+                    {
+                        var pairId = new PairIdentifier
+                        {
+                            WeekNumber = weekNumber,
+                            DayNumber = day.DayNumber,
+                            PairNumber = pairNumber,
+                            DuplicatePairNumber = dupPairNumber + 1
+                        };
+                        return pair.MapToViewModel(pairId);
+                    }).ToList()
                 }).ToList();
                 StudentpedPairs.Add(group);
             }

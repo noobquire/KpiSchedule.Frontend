@@ -24,6 +24,11 @@ namespace KpiSchedule.Frontend.Client
             this.localStorage = localStorage;
         }
 
+        public void ClearHeaders()
+        {
+            httpClient.DefaultRequestHeaders.Clear();
+        }
+
         public async Task SetAuthenticationHeader()
         {
             var authToken = await localStorage.GetItemAsync<JwtTokenResponse>("token");
@@ -146,10 +151,8 @@ namespace KpiSchedule.Frontend.Client
 
         public async Task<StudentScheduleEntity> DeleteSchedulePair(Guid scheduleId, DeleteSchedulePairRequest requestModel)
         {
-            var requestApi = $"schedules/student/{scheduleId}/pair";
+            var requestApi = $"schedules/student/{scheduleId}/pair?week={requestModel.Week}&day={requestModel.Day}&pair={requestModel.Pair}&dupPair={requestModel.DupPair}";
 
-            var requestModelJson = JsonSerializer.Serialize(requestModel);
-            var requestContent = new StringContent(requestModelJson, Encoding.UTF8, "application/json");
             var response = await httpClient.DeleteAsync(requestApi);
             var updatedSchedule = await VerifyAndParseResponseBody<StudentScheduleEntity>(response);
 

@@ -1,8 +1,12 @@
 ﻿@page "/personal-schedule/{scheduleId:guid}"
+@using KpiSchedule.Api.Models.Requests;
 @using KpiSchedule.Common.Entities.Student;
+@using KpiSchedule.Common.Models;
 @using KpiSchedule.Frontend.Shared
 @using KpiSchedule.Frontend.ViewModels.Student;
-@inject KpiScheduleApiClient client
+@using KpiSchedule.Frontend.ViewModels;
+@inject KpiScheduleApiClient client;
+@inject AppStateViewModel appState;
 
 <PageTitle>Особистий розклад</PageTitle>
 @if (scheduleEntity is null)
@@ -13,9 +17,12 @@ else
 {
     <h2 class="text-center">Особистий розклад занять</h2>
     <h3 class="text-center">Перший тиждень</h3>
-    <StudentScheduleTable Pairs="@(scheduleViewModel.GrouppedFirstWeekPairs)" />
-    <h3 class="text-center">Другий тиждень</h3>
-    <StudentScheduleTable Pairs="@(scheduleViewModel.GrouppedSecondWeekPairs)" />
+    <CascadingValue Value="scheduleId">
+        <StudentScheduleTable Pairs="@(scheduleViewModel.GrouppedFirstWeekPairs)" />
+        <h3 class="text-center">Другий тиждень</h3>
+        <StudentScheduleTable Pairs="@(scheduleViewModel.GrouppedSecondWeekPairs)" />
+    </CascadingValue>
+
 }
 
 @code {
@@ -25,10 +32,21 @@ else
     private StudentScheduleEntity? scheduleEntity;
     private StudentScheduleViewModel scheduleViewModel;
 
+    private bool openDeleteDialog = false;
+    private StudentSchedulePairViewModel pairIdToDelete;
+
     protected override async Task OnInitializedAsync()
     {
+        appState.ScheduleUpdated += OnScheduleUpdated;
         await client.SetAuthenticationHeader();
         scheduleEntity = await client.GetStudentSchedule(scheduleId);
         scheduleViewModel = scheduleEntity.MapToViewModel();
+    }
+
+    private async void OnScheduleUpdated()
+    {
+        scheduleEntity = await client.GetStudentSchedule(scheduleId);
+        scheduleViewModel = scheduleEntity.MapToViewModel();
+        StateHasChanged();
     }
 }

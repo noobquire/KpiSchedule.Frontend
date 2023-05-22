@@ -48,6 +48,7 @@ else
     private async Task Logout()
     {
         await localStorage.ClearAsync();
+        client.ClearHeaders();
         appState.IsLoggedIn = false;
     }
 

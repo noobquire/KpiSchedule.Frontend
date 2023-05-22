@@ -1,0 +1,136 @@
+﻿@using KpiSchedule.Common.Models;
+@using KpiSchedule.Frontend.ViewModels.Student;
+<div class="modal fade show" id="myModal" style="display:block; background-color: rgba(10,10,10,.8);" aria-modal="true" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">@Caption</h4>
+                <button type="button" class="btn btn-outline-primary" @onclick="@Cancel">
+                    X
+                </button>
+            </div>
+            <div class="modal-body">
+                <EditForm Model="Pair" class="container">
+                    <div class="py-2">
+                        <label for="pairNameInput">Предмет</label>
+                        <InputText class="form-control" id="pairNameInput" @bind-Value="Pair.Subject"></InputText>
+                    </div>
+                    <div class="py-2">
+                        <label for="teachersNameInput">Викладачі</label>
+                        <InputText class="form-control" id="teachersNameInput" @bind-Value="teachers"></InputText>
+                        <small class="form-text text-muted">Якщо викладачів декілька - запишіть їх через кому.</small>
+                    </div>
+                    <div class="py-2">
+                        <label for="roomsInput">Аудиторії</label>
+                        <InputText class="form-control" id="roomsInput" @bind-Value="rooms"></InputText>
+                        <small class="form-text text-muted">Якщо аудиторій декілька - запишіть їх через кому.</small>
+                    </div>
+                    <div class="py-2">
+                        <label for="pairTypeSelect">Тип пари</label>
+                        <InputSelect @bind-Value="pairType" class="form-select" id="pairTypeSelect">
+                            <option value="@PairType.Lecture">Лекція</option>
+                            <option value="@PairType.Practicum">Практика</option>
+                            <option value="@PairType.Lab">Лабораторна</option>
+                            <option value="@PairType.Seminar">Семінар</option>
+                        </InputSelect>
+                    </div>
+                    <div class="form-check py-2">
+                        <InputCheckbox @bind-Value="Pair.IsOnline" class="form-check-input" id="isOnlineCheckbox"></InputCheckbox>
+                        <label class="form-check-label" for="isOnlineCheckbox">Онлайн пара</label>
+                    </div>
+                    <div class="py-2">
+                        <label for="conferenceUrlInput">Посилання на конференцію</label>
+                        <InputText class="form-control" id="conferenceUrlInput" @bind-Value="Pair.OnlineConferenceUrl"></InputText>
+                    </div>
+                </EditForm>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-danger" @onclick=@Ok>
+                    Зберегти
+                </button>
+                <button type="button" class="btn btn-warning" @onclick="@Cancel">
+                    Скасувати
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+@code {
+    [Parameter]
+    public string Caption { get; set; }
+    [Parameter]
+    public EventCallback<bool> OnClose { get; set; }
+    [Parameter]
+    public StudentSchedulePairViewModel Pair { get; set; }
+
+    private PairType pairType
+    {
+        get
+        {
+            return Pair.PairType switch
+            {
+                "Практика" => PairType.Practicum,
+                "Лекція" => PairType.Lecture,
+                "Лабораторна" => PairType.Lab,
+                "Семінар" => PairType.Seminar,
+                _ => PairType.Lecture
+            };
+        }
+        set
+        {
+            Pair.PairType = value switch
+            {
+                PairType.Practicum => "Практика",
+                PairType.Lecture => "Лекція",
+                PairType.Lab => "Лабораторна",
+                PairType.Seminar => "Семінар",
+                _ => "Лекція"
+            };
+        }
+    }
+
+    private string teachers
+    {
+        get
+        {
+            return string.Join(", ", Pair.Teachers);
+        }
+        set
+        {
+            Pair.Teachers = value.Split(", ").ToList();
+        }
+    }
+
+    private string rooms
+    {
+        get
+        {
+            return string.Join(", ", Pair.Rooms);
+        }
+        set
+        {
+            Pair.Rooms = value.Split(", ").Where(r => !string.IsNullOrEmpty(r)).ToList();
+        }
+    }
+
+    private Task Cancel()
+    {
+        return OnClose.InvokeAsync(false);
+    }
+    private Task Ok()
+    {
+        return OnClose.InvokeAsync(true);
+    }
+
+    private void TeachersListChanged(ChangeEventArgs args)
+    {
+        var teachersString = args.Value.ToString();
+        Pair.Teachers = teachersString.Split(", ").ToList();
+    }
+
+    private void RoomsListChanged(ChangeEventArgs args)
+    {
+        var teachersString = args.Value.ToString();
+        Pair.Rooms = teachersString.Split(", ").ToList();
+    }
+}

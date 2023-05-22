@@ -1,4 +1,5 @@
-﻿using KpiSchedule.Frontend.ViewModels.Base;
+﻿using KpiSchedule.Common.Models;
+using KpiSchedule.Frontend.ViewModels.Base;
 
 namespace KpiSchedule.Frontend.ViewModels.Student
 {
@@ -10,6 +11,7 @@ namespace KpiSchedule.Frontend.ViewModels.Student
         public List<string> Teachers { get; set; }
 
         public string OnlineConferenceUrl { get; set; }
-    }
 
+        public PairIdentifier PairId { get; set; }
+    }
 }

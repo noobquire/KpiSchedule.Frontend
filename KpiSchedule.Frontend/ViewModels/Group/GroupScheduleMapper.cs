@@ -1,4 +1,5 @@
 ﻿using KpiSchedule.Common.Entities.Group;
+using KpiSchedule.Common.Models;
 using KpiSchedule.Common.Parsers;
 
 namespace KpiSchedule.Frontend.ViewModels.Group
@@ -22,7 +23,7 @@ namespace KpiSchedule.Frontend.ViewModels.Group
             var viewModel = new GroupSchedulePairViewModel
             {
                 IsOnline = entity.IsOnline,
-                PairType = entity.PairType.MapPairType(),
+                PairType = entity.PairType.MapPairTypeToString(),
                 Subject = entity.Subject.SubjectName,
                 Rooms = entity.Rooms,
                 Teachers = entity.Teachers.Select(t => t.TeacherName).ToList()
@@ -30,13 +31,27 @@ namespace KpiSchedule.Frontend.ViewModels.Group
             return viewModel;
         }
 
-        public static string MapPairType(this string pairType)
+        public static string MapPairTypeToString(this string pairType)
         {
             return pairType switch
             {
                 "prac" => "Практика",
                 "lecture" => "Лекція",
-                "lab" => "Лабораторна"
+                "lab" => "Лабораторна",
+                "sem" => "Семінар",
+                _ => "Лекція"
+            };
+        }
+
+        public static string MapStringToPairType(this string pairTypeString)
+        {
+            return pairTypeString switch
+            {
+                "Практика" => "Practicum",
+                "Лекція" => "Lecture",
+                "Лабораторна" => "Lab",
+                "Семінар" => "Seminar",
+                _ => "Lecture"
             };
         }
 

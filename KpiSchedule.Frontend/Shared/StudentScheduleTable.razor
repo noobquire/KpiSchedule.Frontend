@@ -29,7 +29,9 @@
                     @foreach (var day in schedulePairsGroup.Days)
                     {
                         <td>
-                            <StudentSchedulePairsGroup Day="day" />
+                            <CascadingValue Value="ScheduleId">
+                                <StudentSchedulePairsGroup Day="day" />
+                            </CascadingValue>
                         </td>
                     }
                 </tr>
@@ -38,6 +40,9 @@
     </table>
 }
 @code {
+    [CascadingParameter]
+    public Guid ScheduleId { get; set; }
+
     [Parameter]
     public List<StudentSchedulePairsGroupViewModel> Pairs { get; set; }
 }

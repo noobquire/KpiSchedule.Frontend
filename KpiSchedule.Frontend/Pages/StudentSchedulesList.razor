@@ -34,19 +34,26 @@ else
             {
                 var scheduleUrl = $"personal-schedule/{studentSchedule.ScheduleId}";
                 <tr style="cursor:pointer">
-                    <td><NavLink href="@scheduleUrl" class="link">@(studentSchedule.ScheduleName ?? "Без назви")</NavLink></td>
-                    <td>@studentSchedule.UpdatedAt.ToString("dd/MM/yyyy HH:mm")</td>
+                    <td><NavLink href="@scheduleUrl" class="link-primary">@(studentSchedule.ScheduleName ?? "Без назви")</NavLink></td>
+                    <td>@studentSchedule.UpdatedAt.ToString("dd.MM.yyyy HH:mm")</td>
                     <td>@(studentSchedule.IsPublic ? "Публічний" : "Приватний")</td>
-                    <td><button class="btn btn-outline-danger" @onclick="(() => DeleteSchedule(studentSchedule.ScheduleId))">Видалити</button></td>
+                    <td><button class="btn btn-outline-danger" @onclick="(() => OpenDeleteDialog(studentSchedule))">Видалити</button></td>
                 </tr>
             }
         </tbody>
     </table>
+    @if(openDeleteDialog)
+    {
+        var scheduleName = scheduleToDelete.ScheduleName ?? "";
+        <ConfirmDeleteDialog Caption="@($"Видалити розклад {scheduleName}?")" Message="@($"Чи дійсно ви хочете видалити розклад {scheduleName}?")" OnClose="OnDeleteDialogClose"></ConfirmDeleteDialog>
+    }
 }
 
 @code {
     private List<StudentScheduleSearchResult> studentSchedules;
     private TelegramAuthenticationRequest userData;
+    private bool openDeleteDialog = false;
+    private StudentScheduleSearchResult scheduleToDelete;
 
     protected override async Task OnInitializedAsync()
     {
@@ -61,5 +68,20 @@ else
         await client.SetAuthenticationHeader();
         await client.DeleteStudentSchedule(scheduleId);
         studentSchedules = await client.GetSchedulesForStudent(userData.Id.ToString());
+    }
+
+    private void OpenDeleteDialog(StudentScheduleSearchResult schedule)
+    {
+        openDeleteDialog = true;
+        scheduleToDelete = schedule;
+    }
+
+    private async Task OnDeleteDialogClose(bool confirm)
+    {
+        if (confirm)
+        {
+            await DeleteSchedule(scheduleToDelete.ScheduleId);
+        }
+        openDeleteDialog = false;
     }
 }
