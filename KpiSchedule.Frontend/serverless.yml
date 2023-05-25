@@ -1,0 +1,98 @@
+service: kpi-schedule-frontend
+app: kpi-schedule
+
+provider:
+  name: aws
+  stage: ${opt:stage, 'dev'}
+  region: eu-central-1
+
+custom:
+  account: 251999958052
+  bucketName: kpi-schedule-frontend
+  certificateId: 587d0dfe-4151-42c6-876c-99b06b53ddd2
+
+resources:
+  Resources:
+    # S3 bucket for WASM/static files deployment
+    KpiScheduleFrontendBucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: ${self:custom.bucketName}
+        PublicAccessBlockConfiguration:
+          BlockPublicAcls: false
+          BlockPublicPolicy: false
+          IgnorePublicAcls: false
+          RestrictPublicBuckets: false
+        OwnershipControls:
+          Rules:
+           - ObjectOwnership: ObjectWriter
+        WebsiteConfiguration:
+          IndexDocument: index.html
+          ErrorDocument: index.html
+
+    KpiScheduleFrontendBucketPolicy:
+      Type: AWS::S3::BucketPolicy
+      Properties:
+        Bucket:
+          Ref: KpiScheduleFrontendBucket
+        PolicyDocument:
+          Statement:
+            - Sid: PublicReadGetObject
+              Effect: Allow
+              Principal: "*"
+              Action:
+              - s3:GetObject
+              Resource: arn:aws:s3:::${self:custom.bucketName}/*
+
+    KpiScheduleFrontendDistribution:
+      Type: AWS::CloudFront::Distribution
+      Properties:
+        DistributionConfig:
+          Aliases:
+            - kpi-schedule.com
+          DefaultRootObject: ""
+          Origins:
+            - Id: frontend-bucket
+              DomainName: ${self:custom.bucketName}.s3-website.${self:provider.region}.amazonaws.com
+              OriginPath: ""
+              CustomOriginConfig:
+                HTTPPort: 80
+                HTTPSPort: 443
+                OriginProtocolPolicy: http-only
+                OriginReadTimeout: 30
+                OriginKeepaliveTimeout: 5
+              ConnectionAttempts: 3
+              ConnectionTimeout: 10
+              OriginShield:
+                Enabled: false
+              OriginAccessControlId: ""
+          DefaultCacheBehavior:
+            TargetOriginId: frontend-bucket
+            ViewerProtocolPolicy: redirect-to-https
+            ForwardedValues:
+              QueryString: true
+              Cookies:
+                Forward: all
+            AllowedMethods:
+              - HEAD
+              - DELETE
+              - POST
+              - GET
+              - OPTIONS
+              - PUT
+              - PATCH
+            CachedMethods:
+              - HEAD
+              - GET
+          Enabled: true
+          ViewerCertificate:
+            AcmCertificateArn: arn:aws:acm:us-east-1:${self:custom.account}:certificate/${self:custom.certificateId}
+            SslSupportMethod: sni-only
+            MinimumProtocolVersion: TLSv1.2_2021
+          Restrictions:
+            GeoRestriction:
+              RestrictionType: none
+          WebACLId: ""
+          HttpVersion: http2
+
+       

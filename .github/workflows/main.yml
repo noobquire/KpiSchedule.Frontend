@@ -22,7 +22,15 @@ jobs:
     - name: Setup .NET 6
       uses: actions/setup-dotnet@v1
       with:
-        dotnet-version: 6.0.x  
+        dotnet-version: 6.0.x
+
+    - name: Setup Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v3
+      with:
+        node-version: ${{ matrix.node-version }}
+
+    - name: Install AWS Lambda tools for dotnet CLI
+      run: dotnet tool install -g Amazon.Lambda.Tools
       
     - name: Build project
       run: cd ./KpiSchedule.Frontend && dotnet publish -c Release
@@ -32,6 +40,15 @@ jobs:
       with:
         role-to-assume: arn:aws:iam::251999958052:role/kpi-schedule-github-actions-role
         aws-region: eu-central-1
+
+    - name: serverless deploy infrastructure
+      uses: serverless/github-action@v3.1
+      with:
+        args: |
+          -c 
+          "cd ./KpiSchedule.Frontend &&
+           serverless deploy"
+        entrypoint: /bin/sh
     
     - name: Deploy to S3
       run: cd ./KpiSchedule.Frontend/bin/Release/net6.0/publish/wwwroot && aws s3 sync . s3://kpi-schedule-frontend/ --delete
